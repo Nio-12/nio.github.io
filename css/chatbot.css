@@ -42,6 +42,10 @@ nav a:hover {
     /* Hiệu ứng hover mượt mà */
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 /* 3. Style cho Logo (V và NIO) */
 .logo_container {
     position: relative;
@@ -468,5 +472,174 @@ nav a:hover {
 /* Khoảng cách giữa các tin nhắn */
 #chat-window {
     gap: 8px;
+}
+
+/* === CHUNG CHO CÁC SECTION === */
+.sections .section {
+    padding: 60px 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Tiêu đề section */
+.section h2 {
+    color: #690016;
+    font-size: 2em;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+/* Văn bản chính */
+.section p {
+    color: #ddd;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* === GRID 2 CỘT CHO SERVICES & PRODUCTS === */
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.grid-2 .item {
+    background-color: #111;
+    padding: 20px;
+    border-radius: 8px;
+    color: #eee;
+}
+
+.grid-2 .item h3 {
+    margin-top: 0;
+    color: #fff;
+    text-align: center;
+}
+
+/* === BLOG LIST === */
+.blog-list {
+    list-style: none;
+    padding: 0;
+    margin: 16px auto 0;
+    max-width: 600px;
+}
+
+.blog-list li+li {
+    margin-top: 12px;
+}
+
+.blog-list a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.blog-list a:hover {
+    text-decoration: underline;
+}
+
+/* === CONTACT FORM === */
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.contact-form input,
+.contact-form textarea {
+    padding: 10px;
+    border: 1px solid #444;
+    background: #222;
+    color: #eee;
+    border-radius: 4px;
+    outline: none;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+    border-color: #e50914;
+}
+
+.contact-form button {
+    align-self: flex-end;
+    padding: 10px 20px;
+    border: none;
+    background: #e50914;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.contact-form button:hover {
+    background: #c70812;
+}
+
+/* Contact Section Modern Styles */
+.contact-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 32px;
+}
+
+.contact-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #181818;
+    border-radius: 16px;
+    padding: 24px 20px 16px 20px;
+    min-width: 120px;
+    min-height: 120px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.13);
+    text-decoration: none;
+    color: #fff;
+    transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+    border: 1.5px solid #232526;
+    position: relative;
+}
+
+.contact-card:hover {
+    background: #232526;
+    transform: translateY(-6px) scale(1.04);
+    box-shadow: 0 6px 24px rgba(229,9,20,0.13);
+    border-color: #e50914;
+    z-index: 2;
+}
+
+.contact-icon {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+}
+
+.contact-label {
+    font-size: 1.08em;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: #fff;
+    text-align: center;
+    margin-top: 2px;
+}
+
+@media (max-width: 700px) {
+    .contact-cards {
+        gap: 14px;
+    }
+    .contact-card {
+        min-width: 90px;
+        padding: 16px 8px 10px 8px;
+    }
+    .contact-label {
+        font-size: 0.98em;
+    }
 }
 
