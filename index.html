@@ -150,6 +150,13 @@
     // Biến trạng thái để biết chatbot đã mở hay chưa
     let isChatOpen = false;
 
+    // Định nghĩa sessionId toàn cục, chỉ tạo/lấy một lần khi load trang
+    let sessionId = localStorage.getItem('chatSessionId');
+    if (!sessionId) {
+      sessionId = Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('chatSessionId', sessionId);
+    }
+
     // Các hàm JavaScript khác của bạn (playClickSound, addMessage, addTypingIndicator, removeTypingIndicator, setLoadingState, getOpenAIResponse)
     // Giữ nguyên các hàm này ở đây.
     function playClickSound() {
@@ -209,13 +216,7 @@
       addTypingIndicator();
       setLoadingState(true);
       try {
-        // Tạo sessionId mới khi tải lại trang nếu chưa có, giữ nguyên nếu đã có
-        let sessionId = localStorage.getItem('chatSessionId');
-        if (!sessionId) {
-          sessionId = Math.random().toString(36).substr(2, 9);
-          localStorage.setItem('chatSessionId', sessionId);
-        }
-
+        // Sử dụng sessionId đã tạo ở ngoài, không tạo lại ở đây
         const response = await fetch('http://localhost:3001/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
