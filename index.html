@@ -209,8 +209,12 @@
       addTypingIndicator();
       setLoadingState(true);
       try {
-        // Luôn tạo sessionId mới mỗi lần tải lại trang
-        let sessionId = Math.random().toString(36).substr(2, 9);
+        // Tạo sessionId mới khi tải lại trang nếu chưa có, giữ nguyên nếu đã có
+        let sessionId = localStorage.getItem('chatSessionId');
+        if (!sessionId) {
+          sessionId = Math.random().toString(36).substr(2, 9);
+          localStorage.setItem('chatSessionId', sessionId);
+        }
 
         const response = await fetch('http://localhost:3001/api/chat', {
           method: 'POST',
