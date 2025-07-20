@@ -24,13 +24,6 @@
       <img class="i" src="image/i.png" alt="Logo I" width="9" height="35.5" />
     </div>
     <button id="close-chat" style="display:none;position:absolute;top:20px;right:30px;z-index:10000;font-size:2em;background:none;border:none;color:#fff;cursor:pointer;">×</button>
-    <!-- Khi reload trang, tạo sessionId mới, lưu vào localStorage, xóa chat window -->
-    let sessionId = Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('chatSessionId', sessionId);
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('chat-window').innerHTML = '';
-    });
-
     <div id="chat-window">
     </div>
     <!-- Chat input luôn nằm dưới cùng -->
@@ -156,19 +149,12 @@
     // Biến trạng thái để biết chatbot đã mở hay chưa
     let isChatOpen = false;
 
-    // SessionId logic (keep this at the top)
+    // Định nghĩa sessionId toàn cục, chỉ tạo/lấy một lần khi load trang
     let sessionId = localStorage.getItem('chatSessionId');
     if (!sessionId) {
       sessionId = Math.random().toString(36).substr(2, 9);
       localStorage.setItem('chatSessionId', sessionId);
     }
-
-    // New Conversation button logic
-    document.getElementById('new-conversation').addEventListener('click', function() {
-      sessionId = Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('chatSessionId', sessionId);
-      document.getElementById('chat-window').innerHTML = '';
-    });
 
     // Các hàm JavaScript khác của bạn (playClickSound, addMessage, addTypingIndicator, removeTypingIndicator, setLoadingState, getOpenAIResponse)
     // Giữ nguyên các hàm này ở đây.
