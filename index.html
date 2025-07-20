@@ -24,7 +24,6 @@
       <img class="i" src="image/i.png" alt="Logo I" width="9" height="35.5" />
     </div>
     <button id="close-chat" style="display:none;position:absolute;top:20px;right:30px;z-index:10000;font-size:2em;background:none;border:none;color:#fff;cursor:pointer;">×</button>
-    <button id="new-conversation" style="position:absolute;top:20px;left:30px;z-index:10000;font-size:1em;background:#fff;border:1px solid #ccc;border-radius:5px;cursor:pointer;">Bắt đầu cuộc trò chuyện mới</button>
 
     <div id="chat-window">
     </div>
@@ -210,12 +209,8 @@
       addTypingIndicator();
       setLoadingState(true);
       try {
-        // Generate or retrieve a sessionId (e.g., from localStorage)
-        let sessionId = localStorage.getItem('chatSessionId');
-        if (!sessionId) {
-          sessionId = Math.random().toString(36).substr(2, 9);
-          localStorage.setItem('chatSessionId', sessionId);
-        }
+        // Luôn tạo sessionId mới mỗi lần tải lại trang
+        let sessionId = Math.random().toString(36).substr(2, 9);
 
         const response = await fetch('http://localhost:3001/api/chat', {
           method: 'POST',
@@ -301,12 +296,6 @@
         e.preventDefault();
         chatForm.dispatchEvent(new Event('submit'));
       }
-    });
-
-    // Thêm sự kiện cho nút bắt đầu cuộc trò chuyện mới
-    document.getElementById('new-conversation').addEventListener('click', function() {
-      localStorage.removeItem('chatSessionId');
-      location.reload();
     });
 
     // Bỏ window.addEventListener('load', ...) để input không tự focus khi load trang
