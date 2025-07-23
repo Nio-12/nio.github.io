@@ -1,24 +1,14 @@
 /* 1. Thiết lập Body để căn giữa toàn bộ Chatbot Container */
 body {
     background-color: #000;
-    /* Giữ màu nền đen */
-    /* display: flex; */
-    /* justify-content: center; */
-    /* Căn ngang */
-    /* align-items: center; */
-    /* Căn dọc */
     min-height: 100vh;
-    /* Đảm bảo chiều cao đủ để căn giữa dọc */
     margin: 0;
-    /* Loại bỏ margin mặc định của body */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* Font chữ hiện đại */
     color: #eee;
-    /* Màu chữ mặc định */
 }
 
 nav {
-    background-color: #1c1c1c44;
+    background-color: #1c1c1c2c;
     text-align: center;
     padding: 15px;
     margin: 0px;
@@ -29,18 +19,35 @@ nav a {
     text-decoration: none;
     padding: 10px 20px;
     font-size: 15px;
-    /* display: inline-block; */
+    transition: all 0.3s ease;
 }
-
 nav a:hover {
-    padding: 12px 25px;
-    background-color: #690016;
     color: white;
     font-size: 1em;
     font-weight: bold;
-    transition: background-color 0.5s ease, transform 0.4s ease;
+    transform: scale(1);
     /* Hiệu ứng hover mượt mà */
 }
+
+/* Tạo gạch chân động cho nav */
+nav {
+    position: relative;
+}
+
+/* Gạch chân động */
+.nav-underline {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background-color: #e50914;
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+
+
 
 html {
     scroll-behavior: smooth;

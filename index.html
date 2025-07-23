@@ -11,6 +11,7 @@
 <body>
   <div class="chatbot-container">
     <nav>
+      <div class="nav-underline"></div>
       <a href="#home">Home</a>
       <a href="#about">About</a>
       <a href="#services">Services</a>
@@ -297,6 +298,28 @@
         e.preventDefault();
         chatForm.dispatchEvent(new Event('submit'));
       }
+    });
+    
+    // Xử lý hiệu ứng gạch chân di chuyển cho nav
+    const navLinks = document.querySelectorAll('nav a');
+    const navUnderline = document.querySelector('.nav-underline');
+    
+    navLinks.forEach(link => {
+      link.addEventListener('mouseenter', function() {
+        const linkRect = this.getBoundingClientRect();
+        const navRect = document.querySelector('nav').getBoundingClientRect();
+        
+        const left = linkRect.left - navRect.left;
+        const width = linkRect.width;
+        
+        navUnderline.style.left = left + 'px';
+        navUnderline.style.width = width + 'px';
+      });
+    });
+    
+    // Reset gạch chân khi không hover
+    document.querySelector('nav').addEventListener('mouseleave', function() {
+      navUnderline.style.width = '0';
     });
   </script>
 </body>
