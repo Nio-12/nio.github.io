@@ -16,7 +16,8 @@ app.use(cors({
     ? [
         'https://*.github.io',
         'https://*.vercel.app',
-        'https://yourusername.github.io' // Replace with your actual GitHub username
+        'https://nio-12.github.io', // Your actual GitHub Pages URL
+        'https://nio.github.io' // Alternative domain
       ] 
     : ['http://localhost:3000', 'http://127.0.0.1:5500', 'http://localhost:5500'],
   credentials: true
