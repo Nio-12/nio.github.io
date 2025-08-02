@@ -16,6 +16,10 @@ app.use(cors({
     ? [
         'https://*.github.io',
         'https://*.vercel.app',
+        'https://*.netlify.app',
+        'https://*.herokuapp.com',
+        'https://*.railway.app',
+        'https://*.render.com',
         'https://nio-12.github.io', // Your actual GitHub Pages URL
         'https://nio.github.io' // Alternative domain
       ] 

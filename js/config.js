@@ -11,9 +11,10 @@ const config = {
   }
 };
 
-// Auto-detect environment
+// Auto-detect environment - more flexible
 const isProduction = window.location.hostname !== 'localhost' && 
-                    window.location.hostname !== '127.0.0.1';
+                    window.location.hostname !== '127.0.0.1' &&
+                    !window.location.hostname.includes('localhost');
 
 const currentConfig = isProduction ? config.production : config.development;
 
