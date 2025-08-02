@@ -15,5 +15,5 @@ const testAPI = async (url) => {
 // Test local API
 testAPI('http://localhost:3001/health');
 
-// Test production API (replace with your actual Vercel URL)
-// testAPI('https://your-vercel-url.vercel.app/health'); 
+// Test Vercel API
+testAPI('https://nio-github-io.vercel.app/health'); 

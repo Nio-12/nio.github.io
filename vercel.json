@@ -8,14 +8,11 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/(.*)",
       "dest": "backend/server.js"
     }
   ],
   "env": {
-    "OPENAI_API_KEY": "@openai_api_key",
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_KEY": "@supabase_key",
-    "WEBHOOK_URL": "@webhook_url"
+    "NODE_ENV": "production"
   }
 } 

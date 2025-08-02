@@ -637,15 +637,15 @@ class ChatbotApp {
     // Fallback detection
     if (window.location.hostname === 'nio-12.github.io' || 
         window.location.hostname.includes('github.io')) {
-      // Production API URL - use the same URL from config
-      return 'https://nio-chatbot-backend-production.up.railway.app';
+      // Production API URL - use Vercel URL
+      return 'https://nio-github-io.vercel.app';
     } else if (window.location.hostname === 'localhost' || 
                window.location.hostname === '127.0.0.1') {
       // Development API URL
       return 'http://localhost:3001';
     } else {
-      // Fallback for other domains - use the same URL from config
-      return 'https://nio-chatbot-backend-production.up.railway.app';
+      // Fallback for other domains - use Vercel URL
+      return 'https://nio-github-io.vercel.app';
     }
   }
 
