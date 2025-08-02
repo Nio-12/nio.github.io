@@ -577,8 +577,11 @@ class ChatbotApp {
     this.addTypingIndicator();
     this.setLoadingState(true);
     
+    // Determine API URL based on environment
+    const apiUrl = this.getApiUrl();
+    
     try {
-      const response = await fetch('http://localhost:3001/api/chat', {
+      const response = await fetch(`${apiUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, sessionId: this.sessionId })
@@ -622,6 +625,27 @@ class ChatbotApp {
       console.warn('Server connection failed, using fallback response:', err);
     } finally {
       this.setLoadingState(false);
+    }
+  }
+
+  getApiUrl() {
+    // Use config if available, otherwise fallback to detection
+    if (window.appConfig && window.appConfig.apiUrl) {
+      return window.appConfig.apiUrl;
+    }
+    
+    // Fallback detection
+    if (window.location.hostname === 'yourusername.github.io' || 
+        window.location.hostname.includes('github.io')) {
+      // Production API URL - replace with your actual backend URL
+      return 'https://your-backend-domain.com';
+    } else if (window.location.hostname === 'localhost' || 
+               window.location.hostname === '127.0.0.1') {
+      // Development API URL
+      return 'http://localhost:3001';
+    } else {
+      // Fallback for other domains
+      return 'https://your-backend-domain.com';
     }
   }
 
