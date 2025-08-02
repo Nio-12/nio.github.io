@@ -5,8 +5,8 @@ const config = {
     environment: 'development'
   },
   production: {
-    // TODO: Replace with your actual Vercel URL after deployment
-    apiUrl: 'https://nio-chatbot-backend-abc123.vercel.app', // Replace this with your actual URL
+    // TODO: Replace with your actual Vercel URL from dashboard
+    apiUrl: 'https://your-vercel-url.vercel.app', // Replace this with your actual Vercel URL
     environment: 'production'
   }
 };

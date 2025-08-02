@@ -14,10 +14,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        'https://yourusername.github.io',
         'https://*.github.io',
-        'https://nio-chatbot-backend.vercel.app',
-        'https://*.vercel.app'
+        'https://*.vercel.app',
+        'https://yourusername.github.io' // Replace with your actual GitHub username
       ] 
     : ['http://localhost:3000', 'http://127.0.0.1:5500', 'http://localhost:5500'],
   credentials: true
