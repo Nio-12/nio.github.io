@@ -15,8 +15,9 @@ app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
         'https://yourusername.github.io',
-        'https://yourdomain.com',
-        'https://*.github.io'
+        'https://*.github.io',
+        'https://nio-chatbot-backend.vercel.app',
+        'https://*.vercel.app'
       ] 
     : ['http://localhost:3000', 'http://127.0.0.1:5500', 'http://localhost:5500'],
   credentials: true

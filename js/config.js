@@ -5,7 +5,7 @@ const config = {
     environment: 'development'
   },
   production: {
-    apiUrl: 'https://your-backend-domain.com', // Replace with your actual backend URL
+    apiUrl: 'https://nio-chatbot-backend-xxx.vercel.app', // Replace with your actual Vercel URL
     environment: 'production'
   }
 };
