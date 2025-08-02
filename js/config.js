@@ -5,7 +5,8 @@ const config = {
     environment: 'development'
   },
   production: {
-    apiUrl: 'https://nio-chatbot-backend-xxx.vercel.app', // Replace with your actual Vercel URL
+    // TODO: Replace with your actual Vercel URL after deployment
+    apiUrl: 'https://nio-chatbot-backend-abc123.vercel.app', // Replace this with your actual URL
     environment: 'production'
   }
 };
@@ -17,4 +18,9 @@ const isProduction = window.location.hostname !== 'localhost' &&
 const currentConfig = isProduction ? config.production : config.development;
 
 // Export for use in other files
-window.appConfig = currentConfig; 
+window.appConfig = currentConfig;
+
+// Debug: Log current configuration
+console.log('🔧 App Config:', currentConfig);
+console.log('🌐 Current hostname:', window.location.hostname);
+console.log('📡 API URL:', currentConfig.apiUrl); 
