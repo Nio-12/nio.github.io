@@ -66,18 +66,8 @@ class DashboardApp {
     try {
       this.showLoading('conversations-loading');
       
-      // Detect the correct API URL based on current environment
-      let apiUrl;
-      const currentPort = window.location.port;
-      const currentHostname = window.location.hostname;
-      
-      if (currentHostname === 'localhost' || currentHostname === '127.0.0.1') {
-        // Local development - use port 3001 for backend
-        apiUrl = `http://${currentHostname}:3001/api/conversations`;
-      } else {
-        // Production - use relative URL
-        apiUrl = '/api/conversations';
-      }
+      // Use serverless functions for production deployment
+      const apiUrl = '/api/conversations';
       
       console.log('🔗 Fetching conversations from:', apiUrl);
       
