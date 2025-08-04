@@ -583,8 +583,8 @@ class ChatbotApp {
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         apiUrl = 'http://localhost:3001/api/chat';
       } else {
-        // For production/serverless deployment
-        apiUrl = '/api/chat';
+        // For production/serverless deployment - temporarily use simple version
+        apiUrl = '/api/chat-simple';
       }
       
       console.log('🌐 Calling API:', apiUrl);
