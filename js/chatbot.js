@@ -145,7 +145,7 @@ class ChatbotApp {
   constructor() {
     this.isChatOpen = false;
     this.isMinimized = false;
-    this.sessionId = this.generateSessionId();
+    this.sessionId = null; // Will be set by startConversation
     this.elements = this.initializeElements();
     this.voiceManager = new VoiceManager();
     this.bindEvents();
@@ -155,6 +155,41 @@ class ChatbotApp {
     this.voiceManager.onVoiceResultCallback = (transcript) => {
       this.handleVoiceInput(transcript);
     };
+
+    // Start conversation when chatbot is initialized
+    this.startConversation();
+  }
+
+  async startConversation() {
+    try {
+      console.log('🆕 Starting new conversation...');
+      
+      const response = await fetch('/api/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      this.sessionId = data.conversation_id;
+      
+      console.log('✅ Conversation started:', this.sessionId);
+      
+      // Store session ID in localStorage
+      localStorage.setItem('chatSessionId', this.sessionId);
+      
+    } catch (error) {
+      console.error('❌ Failed to start conversation:', error);
+      
+      // Fallback to local session ID
+      this.sessionId = this.generateSessionId();
+      console.log('🔄 Using fallback session ID:', this.sessionId);
+    }
   }
 
   generateSessionId() {
@@ -578,10 +613,16 @@ class ChatbotApp {
     this.setLoadingState(true);
     
     try {
+      // Ensure we have a session ID
+      if (!this.sessionId) {
+        console.log('🔄 No session ID, starting new conversation...');
+        await this.startConversation();
+      }
+      
       // Use serverless functions for production deployment
       const apiUrl = '/api/chat';
       
-      console.log('🌐 Calling API:', apiUrl);
+      console.log('🌐 Calling API:', apiUrl, 'with sessionId:', this.sessionId);
       
       const response = await fetch(apiUrl, {
         method: 'POST',
