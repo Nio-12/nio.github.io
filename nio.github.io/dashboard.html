@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NiO Chat Dashboard - Quản lý và phân tích cuộc hội thoại chatbot">
+  <meta name="keywords" content="dashboard, chatbot, analytics, NiO">
+  <meta name="author" content="NiO Creative">
+  <title>NiO Chat Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+
+<body>
+  <div class="dashboard-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="logo-section">
+          <img src="image/nio.png" alt="NiO Logo" class="logo" loading="lazy">
+          <h1>Chat Dashboard</h1>
+        </div>
+        <button id="back-to-chat" class="back-button" aria-label="Back to chat">
+          <span>← Back to Chat</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <!-- Conversations List -->
+      <div class="conversations-section" id="conversations-section">
+        <div class="section-header">
+          <h2>Conversations</h2>
+          <div class="header-actions">
+            <div class="search-container">
+              <input 
+                type="text" 
+                id="search-conversations" 
+                placeholder="Search conversations..." 
+                class="search-input"
+                aria-label="Search conversations"
+              >
+              <button id="clear-search" class="clear-search-btn" aria-label="Clear search" style="display: none;">
+                <span>✕</span>
+              </button>
+            </div>
+            <button id="refresh-conversations" class="refresh-btn" aria-label="Refresh conversations">
+              <span>🔄</span>
+            </button>
+          </div>
+        </div>
+        <div class="conversations-list" id="conversations-list">
+          <div class="loading-spinner" id="conversations-loading">
+            <div class="spinner"></div>
+            <p>Loading conversations...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conversation Details -->
+      <div class="conversation-details" id="conversation-details" style="display: none;">
+        <div class="details-header">
+          <button id="back-to-list" class="back-list-btn" aria-label="Back to conversations list">
+            <span>← Back to List</span>
+          </button>
+          <h3 id="conversation-title">Conversation Details</h3>
+        </div>
+        <div class="messages-container" id="messages-container">
+          <div class="loading-spinner" id="messages-loading">
+            <div class="spinner"></div>
+            <p>Loading messages...</p>
+          </div>
+        </div>
+        
+        <!-- Customer Analysis Section -->
+        <div class="analysis-section" id="analysis-section" style="display: none;">
+          <div class="analysis-header">
+            <h4>Customer Analysis</h4>
+            <button id="analyze-conversation" class="analyze-btn-large" aria-label="Analyze conversation">
+              <span>🔍 Analyze Conversation</span>
+            </button>
+          </div>
+          <div class="analysis-content" id="analysis-content">
+            <div class="loading-spinner" id="analysis-loading" style="display: none;">
+              <div class="spinner"></div>
+              <p>Analyzing conversation...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/dashboard.js" defer></script>
+</body>
+</html> 
