@@ -165,4 +165,4 @@ Return only valid JSON without any additional text.
     console.error('❌ Analyze error:', error);
     res.status(500).json(createErrorResponse('Failed to analyze conversation'));
   }
-} 
+}
