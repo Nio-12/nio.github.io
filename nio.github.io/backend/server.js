@@ -3,6 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -16,6 +21,24 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from parent directory
+app.use(express.static(path.join(__dirname, '..')));
+
+// Serve index.html for root path
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+// Serve dashboard
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'dashboard.html'));
+});
+
+// Serve voice test
+app.get('/voice-test', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'voice-test.html'));
+});
 
 // Initialize OpenAI
 const openai = new OpenAI({
