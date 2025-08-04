@@ -578,24 +578,18 @@ class ChatbotApp {
     this.setLoadingState(true);
     
     try {
-      // Determine API URL based on environment
-      let apiUrl;
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        apiUrl = 'http://localhost:3001/api/chat';
-      } else {
-        // For production/serverless deployment - test with simple endpoint
-        apiUrl = '/api/hello';
-      }
+      // Use local server for development
+      const apiUrl = 'http://localhost:3001/api/chat';
       
       console.log('🌐 Calling API:', apiUrl);
       
       const response = await fetch(apiUrl, {
-        method: 'GET', // Changed to GET for testing
+        method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Accept': 'application/json'
-        }
-        // Removed body for GET request
+        },
+        body: JSON.stringify({ message, sessionId: this.sessionId })
       });
       
       console.log('📡 Response status:', response.status);
@@ -609,15 +603,18 @@ class ChatbotApp {
       
       this.removeTypingIndicator();
       
-      // Use test response
-      const testResponse = `Test response: ${data.message}. Your message was: "${message}"`;
-      
-      setTimeout(() => {
-        this.addMessage(testResponse, 'bot');
-        // Speak the response if voice output is enabled
-        this.voiceManager.speak(testResponse);
-      }, 500);
-      
+      if (data.response) {
+        // Add a small delay before starting typing effect
+        setTimeout(() => {
+          this.addMessage(data.response, 'bot');
+          // Speak the response if voice output is enabled
+          this.voiceManager.speak(data.response);
+        }, 500);
+      } else {
+        setTimeout(() => {
+          this.addMessage('I apologize, but I encountered an issue processing your request. Please try again.', 'bot');
+        }, 500);
+      }
     } catch (err) {
       this.removeTypingIndicator();
       
