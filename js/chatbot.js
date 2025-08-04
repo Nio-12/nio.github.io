@@ -578,8 +578,8 @@ class ChatbotApp {
     this.setLoadingState(true);
     
     try {
-      // Use local server for development
-      const apiUrl = 'http://localhost:3001/api/chat';
+      // Use serverless functions for production deployment
+      const apiUrl = '/api/chat';
       
       console.log('🌐 Calling API:', apiUrl);
       
