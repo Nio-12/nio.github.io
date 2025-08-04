@@ -1,174 +1,171 @@
-# 🤖 NiO AI Chatbot
+# NiO AI Chatbot - Serverless Version
 
-Một chatbot AI thông minh được xây dựng với Node.js, OpenAI API và Supabase.
+Chatbot AI thông minh với khả năng xử lý cuộc hội thoại và phân tích khách hàng, được tối ưu hóa cho deployment trên Vercel.
 
-## ✨ Tính năng
+## 🚀 Tính năng
 
-- **💬 Chat thông minh** - Sử dụng OpenAI GPT-3.5-turbo
-- **🎤 Voice Input/Output** - Hỗ trợ ghi âm và đọc văn bản
-- **📊 Dashboard** - Quản lý và phân tích conversations
-- **🔍 Customer Analysis** - Tự động extract thông tin khách hàng
-- **💾 Database** - Lưu trữ với Supabase
-- **📱 Responsive** - Giao diện thích ứng mọi thiết bị
+- **Chat AI thông minh**: Tích hợp OpenAI GPT-3.5-turbo
+- **Nhận dạng giọng nói**: Hỗ trợ tiếng Việt và tiếng Anh
+- **Phát âm tự động**: Chuyển đổi text thành giọng nói
+- **Dashboard quản lý**: Theo dõi và phân tích cuộc hội thoại
+- **Lưu trữ dữ liệu**: Sử dụng Supabase để lưu trữ
+- **Serverless Architecture**: Tối ưu cho Vercel deployment
 
-## 🚀 Cài đặt
+## 📁 Cấu trúc dự án
 
-### Yêu cầu
-- Node.js 16+
-- npm hoặc yarn
-- OpenAI API key
-- Supabase account (optional)
-
-### Bước 1: Clone repository
-```bash
-git clone https://github.com/yourusername/nio-chatbot.git
-cd nio-chatbot
+```
+nio.github.io/
+├── api/                    # Serverless Functions
+│   ├── chat.js            # Chat endpoint
+│   ├── conversations.js   # Get conversations list
+│   ├── conversations/[id].js # Conversation details/delete
+│   ├── conversations/[id]/analyze.js # Analyze conversation
+│   ├── health.js          # Health check
+│   └── test-openai.js     # Test OpenAI connection
+├── css/                   # Stylesheets
+├── js/                    # Frontend JavaScript
+├── image/                 # Images
+├── index.html             # Main chatbot page
+├── dashboard.html         # Admin dashboard
+├── vercel.json           # Vercel configuration
+└── package.json          # Dependencies
 ```
 
-### Bước 2: Cài đặt dependencies
+## 🛠️ Cài đặt và Deploy
+
+### 1. Chuẩn bị môi trường
+
 ```bash
-cd backend
+# Clone repository
+git clone <your-repo-url>
+cd nio.github.io
+
+# Cài đặt dependencies
 npm install
 ```
 
-### Bước 3: Cấu hình environment
-Tạo file `.env` trong thư mục `backend/`:
+### 2. Cấu hình Environment Variables
+
+Tạo file `.env.local` (cho development) hoặc cấu hình trong Vercel:
+
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
 SUPABASE_URL=your_supabase_url_here
-SUPABASE_KEY=your_supabase_key_here
+SUPABASE_KEY=your_supabase_anon_key_here
 ```
 
-### Bước 4: Khởi động server
+### 3. Deploy lên Vercel
+
+#### Cách 1: Sử dụng Vercel CLI
+
 ```bash
-cd backend
-node server.js
+# Cài đặt Vercel CLI
+npm i -g vercel
+
+# Login vào Vercel
+vercel login
+
+# Deploy
+vercel --prod
 ```
 
-Server sẽ chạy trên `http://localhost:3001`
+#### Cách 2: Deploy qua GitHub
 
-## 📁 Cấu trúc Project
+1. Push code lên GitHub
+2. Kết nối repository với Vercel
+3. Cấu hình environment variables trong Vercel dashboard
+4. Deploy tự động
 
-```
-nio-chatbot/
-├── index.html              # Giao diện chính chatbot
-├── dashboard.html          # Dashboard quản lý
-├── voice-test.html         # Test tính năng giọng nói
-├── css/                    # Styles
-│   ├── chatbot.css
-│   └── dashboard.css
-├── js/                     # JavaScript
-│   ├── chatbot.js
-│   └── dashboard.js
-├── image/                  # Hình ảnh
-├── backend/                # Server Node.js
-│   ├── server.js          # Main server
-│   ├── package.json       # Dependencies
-│   └── .env              # Environment variables
-└── README.md
+### 4. Cấu hình Supabase
+
+Tạo bảng `conversations` trong Supabase:
+
+```sql
+CREATE TABLE conversations (
+  conversation_id TEXT PRIMARY KEY,
+  messages JSONB DEFAULT '[]',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  customerName TEXT,
+  customerEmail TEXT,
+  customerPhone TEXT,
+  customerIndustry TEXT,
+  customerProblem TEXT,
+  customerAvailability TEXT,
+  customerConsultation BOOLEAN DEFAULT FALSE,
+  specialNotes TEXT,
+  leadQuality TEXT DEFAULT 'ok'
+);
 ```
 
 ## 🔧 API Endpoints
 
 ### Chat
-- `POST /api/chat` - Gửi tin nhắn đến chatbot
+- **POST** `/api/chat`
+- Body: `{ message: string, sessionId: string }`
+- Response: `{ response: string }`
 
-### Dashboard
-- `GET /api/conversations` - Lấy danh sách conversations
-- `GET /api/conversations/:id` - Lấy chi tiết conversation
-- `DELETE /api/conversations/:id` - Xóa conversation
-- `POST /api/conversations/:id/analyze` - Phân tích conversation
+### Conversations
+- **GET** `/api/conversations` - Lấy danh sách conversations
+- **GET** `/api/conversations/[id]` - Lấy chi tiết conversation
+- **DELETE** `/api/conversations/[id]` - Xóa conversation
+- **POST** `/api/conversations/[id]/analyze` - Phân tích conversation
 
-### Health Check
-- `GET /api/health` - Kiểm tra trạng thái server
-- `GET /api/test-openai` - Test kết nối OpenAI
+### Health & Test
+- **GET** `/api/health` - Health check
+- **GET** `/api/test-openai` - Test OpenAI connection
 
-## 🎯 Tính năng nâng cao
+## 🌐 URLs sau khi deploy
 
-### Voice Features
-- **Voice Input**: Ghi âm và chuyển thành text
-- **Voice Output**: Đọc văn bản thành giọng nói
-- **Multi-language**: Hỗ trợ tiếng Việt và tiếng Anh
+- **Chatbot**: `https://your-domain.vercel.app/`
+- **Dashboard**: `https://your-domain.vercel.app/dashboard`
+- **API Base**: `https://your-domain.vercel.app/api/`
 
-### Customer Analysis
-- **Auto-extract**: Tên, email, phone, industry
-- **Lead Quality**: Phân loại lead (good/ok/spam)
-- **Business Insights**: Problems, needs, availability
+## 🔄 Migration từ Persistent Server
 
-### Dashboard Features
-- **Conversation Management**: Xem, xóa conversations
-- **Search & Filter**: Tìm kiếm conversations
-- **Real-time Updates**: Cập nhật real-time
-- **Export Data**: Xuất dữ liệu phân tích
+### Những thay đổi chính:
 
-## 🛠️ Tech Stack
+1. **Loại bỏ Express server**: Không còn `server.js` và `app.listen()`
+2. **Serverless Functions**: Mỗi endpoint là một function riêng biệt
+3. **CORS handling**: Tự động xử lý trong mỗi function
+4. **Environment detection**: Tự động phát hiện local/production
+5. **Vercel configuration**: `vercel.json` để cấu hình routing
 
-- **Frontend**: HTML5, CSS3, JavaScript ES6+
-- **Backend**: Node.js, Express.js
-- **AI**: OpenAI GPT-3.5-turbo
-- **Database**: Supabase (PostgreSQL)
-- **Voice**: Web Speech API
-- **Deployment**: Vercel (recommended)
+### Lợi ích của Serverless:
 
-## 📝 Cách sử dụng
+- ✅ **Auto-scaling**: Tự động scale theo traffic
+- ✅ **Pay-per-use**: Chỉ trả tiền khi có request
+- ✅ **Global CDN**: Tốc độ truy cập nhanh toàn cầu
+- ✅ **Zero maintenance**: Không cần quản lý server
+- ✅ **Automatic deployments**: Deploy tự động từ Git
 
-### 1. Chat với AI
-1. Mở `index.html` trong trình duyệt
-2. Nhấn nút chat để mở chatbot
-3. Gõ tin nhắn hoặc sử dụng voice input
-4. AI sẽ trả lời thông minh
+## 🐛 Troubleshooting
 
-### 2. Dashboard
-1. Mở `dashboard.html` trong trình duyệt
-2. Xem danh sách conversations
-3. Click vào conversation để xem chi tiết
-4. Sử dụng "Analyze" để phân tích khách hàng
+### Lỗi thường gặp:
 
-### 3. Voice Test
-1. Mở `voice-test.html` trong trình duyệt
-2. Test tính năng ghi âm và đọc văn bản
-3. Kiểm tra hỗ trợ trình duyệt
+1. **CORS Error**: Đã được xử lý trong serverless functions
+2. **Environment Variables**: Kiểm tra cấu hình trong Vercel dashboard
+3. **Supabase Connection**: Đảm bảo URL và key đúng
+4. **OpenAI API**: Kiểm tra API key và quota
 
-## 🔒 Bảo mật
+### Debug:
 
-- API keys được lưu trong `.env` (không commit)
-- CORS được cấu hình cho production
-- Input validation và sanitization
-- Error handling toàn diện
+```bash
+# Local development
+npm run dev
 
-## 🚀 Deployment
+# Check logs
+vercel logs
 
-### Vercel (Recommended)
-1. Push code lên GitHub
-2. Connect với Vercel
-3. Set environment variables
-4. Deploy tự động
+# Test API locally
+curl -X POST http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Hello","sessionId":"test"}'
+```
 
-### Railway
-1. Connect GitHub repository
-2. Set environment variables
-3. Deploy với Railway
+## 📝 License
 
-## 🤝 Contributing
-
-1. Fork repository
-2. Tạo feature branch
-3. Commit changes
-4. Push to branch
-5. Tạo Pull Request
-
-## 📄 License
-
-MIT License - xem file LICENSE để biết thêm chi tiết.
-
-## 📞 Support
-
-Nếu có vấn đề, hãy:
-1. Kiểm tra logs trong console
-2. Test API endpoints
-3. Kiểm tra environment variables
-4. Tạo issue trên GitHub
+MIT License - Xem file LICENSE để biết thêm chi tiết.
 
 ---
 
-**Made with ❤️ by NiO Team** 
+**NiO Creative** - AI Solutions for Modern Businesses 
