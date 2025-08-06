@@ -20,19 +20,35 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '..'))); // Serve static files from parent directory
 
 // Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+let openai = null;
+try {
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+    console.log('✅ OpenAI initialized successfully');
+  } else {
+    console.log('⚠️ OpenAI API key not configured - AI features will be disabled');
+  }
+} catch (error) {
+  console.error('❌ Failed to initialize OpenAI:', error.message);
+}
 
 // Initialize Supabase
 let supabase = null;
 try {
   if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
     supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+    console.log('✅ Supabase initialized successfully');
+  } else {
+    console.log('⚠️ Supabase not configured - using in-memory storage');
   }
 } catch (error) {
   console.error('❌ Failed to initialize Supabase:', error.message);
 }
+
+// In-memory storage fallback
+const conversations = new Map();
 
 // Utility functions
 const createErrorResponse = (message, status = 500) => ({
@@ -59,27 +75,27 @@ app.get('/dashboard', (req, res) => {
 // Start conversation endpoint
 app.post('/start', async (req, res) => {
   try {
-    if (!supabase) {
-      return res.status(500).json(createErrorResponse('Supabase not configured'));
-    }
-
-    // Generate new conversation ID
     const conversationId = generateConversationId();
     
     console.log(`🆕 Creating new conversation: ${conversationId}`);
 
-    // Create new conversation in database
-    const { error } = await supabase
-      .from('conversations')
-      .insert({
-        conversation_id: conversationId,
-        messages: [],
-        created_at: new Date().toISOString()
-      });
+    if (supabase) {
+      // Create new conversation in database
+      const { error } = await supabase
+        .from('conversations')
+        .insert({
+          conversation_id: conversationId,
+          messages: [],
+          created_at: new Date().toISOString()
+        });
 
-    if (error) {
-      console.error('❌ Supabase insert error:', error);
-      return res.status(500).json(createErrorResponse('Failed to create conversation'));
+      if (error) {
+        console.error('❌ Supabase insert error:', error);
+        return res.status(500).json(createErrorResponse('Failed to create conversation'));
+      }
+    } else {
+      // Use in-memory storage
+      conversations.set(conversationId, []);
     }
 
     console.log(`✅ Conversation created successfully: ${conversationId}`);
@@ -105,13 +121,13 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json(createErrorResponse('Missing message or sessionId'));
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json(createErrorResponse('OpenAI API key not configured'));
+    if (!openai) {
+      return res.status(500).json(createErrorResponse('OpenAI not configured'));
     }
 
     console.log(`💬 Processing message for session: ${sessionId}`);
 
-    // Get conversation history from database
+    // Get conversation history
     let conversationHistory = [];
     if (supabase) {
       const { data } = await supabase
@@ -123,6 +139,8 @@ app.post('/api/chat', async (req, res) => {
       if (data) {
         conversationHistory = data.messages || [];
       }
+    } else {
+      conversationHistory = conversations.get(sessionId) || [];
     }
 
     // Add user message to history
@@ -147,7 +165,7 @@ app.post('/api/chat', async (req, res) => {
     // Add AI response to history
     conversationHistory.push({ role: 'assistant', content: aiResponse });
 
-    // Save updated conversation to database
+    // Save updated conversation
     if (supabase) {
       const { error } = await supabase
         .from('conversations')
@@ -160,6 +178,8 @@ app.post('/api/chat', async (req, res) => {
       if (error) {
         console.error('❌ Supabase save error:', error);
       }
+    } else {
+      conversations.set(sessionId, conversationHistory);
     }
 
     res.status(200).json({ response: aiResponse });
@@ -173,31 +193,39 @@ app.post('/api/chat', async (req, res) => {
 // Get conversations list
 app.get('/api/conversations', async (req, res) => {
   try {
-    if (!supabase) {
-      return res.status(500).json(createErrorResponse('Supabase not configured'));
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('conversation_id, created_at, messages')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('❌ Supabase fetch error:', error);
+        return res.status(500).json(createErrorResponse('Failed to fetch conversations'));
+      }
+
+      // Format conversations for frontend
+      const formattedConversations = data.map(conv => ({
+        id: conv.conversation_id,
+        createdAt: conv.created_at,
+        messageCount: conv.messages ? conv.messages.length : 0,
+        lastMessage: conv.messages && conv.messages.length > 0 
+          ? conv.messages[conv.messages.length - 1].content 
+          : 'No messages'
+      }));
+
+      res.status(200).json(formattedConversations);
+    } else {
+      // Use in-memory storage
+      const formattedConversations = Array.from(conversations.entries()).map(([id, messages]) => ({
+        id,
+        createdAt: new Date().toISOString(),
+        messageCount: messages.length,
+        lastMessage: messages.length > 0 ? messages[messages.length - 1].content : 'No messages'
+      }));
+
+      res.status(200).json(formattedConversations);
     }
-
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('conversation_id, created_at, messages')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('❌ Supabase fetch error:', error);
-      return res.status(500).json(createErrorResponse('Failed to fetch conversations'));
-    }
-
-    // Format conversations for frontend
-    const formattedConversations = data.map(conv => ({
-      id: conv.conversation_id,
-      createdAt: conv.created_at,
-      messageCount: conv.messages ? conv.messages.length : 0,
-      lastMessage: conv.messages && conv.messages.length > 0 
-        ? conv.messages[conv.messages.length - 1].content 
-        : 'No messages'
-    }));
-
-    res.status(200).json(formattedConversations);
 
   } catch (error) {
     console.error('❌ Get conversations error:', error);
@@ -210,22 +238,31 @@ app.get('/api/conversations/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!supabase) {
-      return res.status(500).json(createErrorResponse('Supabase not configured'));
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('conversation_id', id)
+        .single();
+
+      if (error) {
+        console.error('❌ Supabase fetch error:', error);
+        return res.status(404).json(createErrorResponse('Conversation not found'));
+      }
+
+      res.status(200).json(data);
+    } else {
+      const messages = conversations.get(id);
+      if (!messages) {
+        return res.status(404).json(createErrorResponse('Conversation not found'));
+      }
+
+      res.status(200).json({
+        conversation_id: id,
+        messages: messages,
+        created_at: new Date().toISOString()
+      });
     }
-
-    const { data, error } = await supabase
-      .from('conversations')
-      .select('*')
-      .eq('conversation_id', id)
-      .single();
-
-    if (error) {
-      console.error('❌ Supabase fetch error:', error);
-      return res.status(404).json(createErrorResponse('Conversation not found'));
-    }
-
-    res.status(200).json(data);
 
   } catch (error) {
     console.error('❌ Get conversation error:', error);
@@ -238,18 +275,18 @@ app.delete('/api/conversations/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!supabase) {
-      return res.status(500).json(createErrorResponse('Supabase not configured'));
-    }
+    if (supabase) {
+      const { error } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('conversation_id', id);
 
-    const { error } = await supabase
-      .from('conversations')
-      .delete()
-      .eq('conversation_id', id);
-
-    if (error) {
-      console.error('❌ Supabase delete error:', error);
-      return res.status(500).json(createErrorResponse('Failed to delete conversation'));
+      if (error) {
+        console.error('❌ Supabase delete error:', error);
+        return res.status(500).json(createErrorResponse('Failed to delete conversation'));
+      }
+    } else {
+      conversations.delete(id);
     }
 
     res.status(200).json({ message: 'Conversation deleted successfully' });
@@ -265,23 +302,30 @@ app.post('/api/conversations/:id/analyze', async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!supabase) {
-      return res.status(500).json(createErrorResponse('Supabase not configured'));
+    if (!openai) {
+      return res.status(500).json(createErrorResponse('OpenAI not configured'));
     }
 
     // Get conversation
-    const { data: conversation, error: fetchError } = await supabase
-      .from('conversations')
-      .select('messages')
-      .eq('conversation_id', id)
-      .single();
+    let messages = [];
+    if (supabase) {
+      const { data: conversation, error: fetchError } = await supabase
+        .from('conversations')
+        .select('messages')
+        .eq('conversation_id', id)
+        .single();
 
-    if (fetchError) {
-      console.error('❌ Supabase fetch error:', fetchError);
-      return res.status(404).json(createErrorResponse('Conversation not found'));
+      if (fetchError) {
+        console.error('❌ Supabase fetch error:', fetchError);
+        return res.status(404).json(createErrorResponse('Conversation not found'));
+      }
+
+      messages = conversation.messages || [];
+    } else {
+      messages = conversations.get(id) || [];
     }
 
-    if (!conversation.messages || conversation.messages.length === 0) {
+    if (messages.length === 0) {
       return res.status(400).json(createErrorResponse('No messages to analyze'));
     }
 
@@ -292,7 +336,7 @@ app.post('/api/conversations/:id/analyze', async (req, res) => {
     - User satisfaction level
     - Suggestions for improvement
     
-    Conversation: ${JSON.stringify(conversation.messages)}`;
+    Conversation: ${JSON.stringify(messages)}`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -325,7 +369,9 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    openai: openai ? 'Configured' : 'Not configured',
+    supabase: supabase ? 'Connected' : 'Not connected'
   });
 });
 
@@ -334,4 +380,12 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📊 Dashboard: http://localhost:${PORT}/dashboard`);
   console.log(`🔧 Health check: http://localhost:${PORT}/api/health`);
+  
+  if (!process.env.OPENAI_API_KEY) {
+    console.log(`\n⚠️  WARNING: Please set your OpenAI API key in the .env file!`);
+  }
+  
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+    console.log(`\n⚠️  WARNING: Please set your Supabase credentials in the .env file!`);
+  }
 });
