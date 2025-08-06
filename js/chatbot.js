@@ -460,40 +460,19 @@ class ChatbotApp {
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
     
-    if (sender === 'bot') {
-      // Apply typing effect to bot messages
-      bubble.classList.add('typing-effect');
-      bubble.textContent = '';
-      msgDiv.appendChild(bubble);
-      
-      // In compact mode, append to messages-container
-      const messagesContainer = this.elements.chatWindow.querySelector('.messages-container');
-      if (messagesContainer) {
-        messagesContainer.appendChild(msgDiv);
-        this.scrollToBottom(messagesContainer);
-      } else {
-        // Fallback to original behavior
-        this.elements.chatWindow.appendChild(msgDiv);
-        this.scrollToBottom(this.elements.chatWindow);
-      }
-      
-      // Start typing effect
-      this.typeMessage(bubble, text);
+    // Display message immediately without typing effect
+    bubble.textContent = text;
+    msgDiv.appendChild(bubble);
+    
+    // In compact mode, append to messages-container
+    const messagesContainer = this.elements.chatWindow.querySelector('.messages-container');
+    if (messagesContainer) {
+      messagesContainer.appendChild(msgDiv);
+      this.scrollToBottom(messagesContainer);
     } else {
-      // User messages display immediately
-      bubble.textContent = text;
-      msgDiv.appendChild(bubble);
-      
-      // In compact mode, append to messages-container
-      const messagesContainer = this.elements.chatWindow.querySelector('.messages-container');
-      if (messagesContainer) {
-        messagesContainer.appendChild(msgDiv);
-        this.scrollToBottom(messagesContainer);
-      } else {
-        // Fallback to original behavior
-        this.elements.chatWindow.appendChild(msgDiv);
-        this.scrollToBottom(this.elements.chatWindow);
-      }
+      // Fallback to original behavior
+      this.elements.chatWindow.appendChild(msgDiv);
+      this.scrollToBottom(this.elements.chatWindow);
     }
     
     this.playClickSound();
@@ -505,38 +484,6 @@ class ChatbotApp {
       top: element.scrollHeight,
       behavior: 'smooth'
     });
-  }
-
-  addTypingIndicator() {
-    if (!this.elements.chatWindow) return;
-
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'message bot typing-indicator';
-    typingDiv.id = 'typing-indicator';
-    
-    for (let i = 0; i < 3; i++) {
-      const dot = document.createElement('div');
-      dot.className = 'typing-dot';
-      typingDiv.appendChild(dot);
-    }
-    
-    // In compact mode, append to messages-container
-    const messagesContainer = this.elements.chatWindow.querySelector('.messages-container');
-    if (messagesContainer) {
-      messagesContainer.appendChild(typingDiv);
-      this.scrollToBottom(messagesContainer);
-    } else {
-      // Fallback to original behavior
-      this.elements.chatWindow.appendChild(typingDiv);
-      this.scrollToBottom(this.elements.chatWindow);
-    }
-  }
-
-  removeTypingIndicator() {
-    const typingIndicator = document.getElementById('typing-indicator');
-    if (typingIndicator) {
-      typingIndicator.remove();
-    }
   }
 
   setLoadingState(isLoading) {
@@ -552,64 +499,7 @@ class ChatbotApp {
     }
   }
 
-  typeMessage(element, text, index = 0) {
-    if (index < text.length) {
-      const char = text[index];
-      element.textContent += char;
-      
-      // Smooth scroll to bottom during typing
-      const messagesContainer = this.elements.chatWindow.querySelector('.messages-container');
-      if (messagesContainer) {
-        this.scrollToBottom(messagesContainer);
-      } else {
-        this.scrollToBottom(this.elements.chatWindow);
-      }
-      
-      // Add cursor at the end
-      const cursor = document.createElement('span');
-      cursor.className = 'cursor';
-      element.appendChild(cursor);
-      
-      // Determine typing speed based on character
-      const speed = this.getTypingSpeed(char);
-      
-      // Use requestAnimationFrame for smoother animation
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          // Remove cursor before adding next character
-          const existingCursor = element.querySelector('.cursor');
-          if (existingCursor) {
-            existingCursor.remove();
-          }
-          this.typeMessage(element, text, index + 1);
-        }, speed);
-      });
-    } else {
-      // Typing complete, add final cursor
-      const cursor = document.createElement('span');
-      cursor.className = 'cursor';
-      element.appendChild(cursor);
-      
-      // Remove cursor after a shorter delay
-      setTimeout(() => {
-        const finalCursor = element.querySelector('.cursor');
-        if (finalCursor) {
-          finalCursor.remove();
-        }
-      }, 1000);
-    }
-  }
-
-  getTypingSpeed(char) {
-    // Much faster typing speeds
-    if (char === ' ') return 10; // Very fast for spaces
-    if (char === '.' || char === '!' || char === '?') return 80; // Faster for punctuation
-    if (char === ',' || char === ';' || char === ':') return 50; // Faster for commas
-    return 25; // Much faster default speed
-  }
-
   async getOpenAIResponse(message) {
-    this.addTypingIndicator();
     this.setLoadingState(true);
     
     try {
@@ -642,22 +532,18 @@ class ChatbotApp {
       const data = await response.json();
       console.log('📦 Response data:', data);
       
-      this.removeTypingIndicator();
+      this.setLoadingState(false);
       
       if (data.response) {
-        // Add a small delay before starting typing effect
-        setTimeout(() => {
-          this.addMessage(data.response, 'bot');
-          // Speak the response if voice output is enabled
-          this.voiceManager.speak(data.response);
-        }, 500);
+        // Add message immediately without delay
+        this.addMessage(data.response, 'bot');
+        // Speak the response if voice output is enabled
+        this.voiceManager.speak(data.response);
       } else {
-        setTimeout(() => {
-          this.addMessage('I apologize, but I encountered an issue processing your request. Please try again.', 'bot');
-        }, 500);
+        this.addMessage('I apologize, but I encountered an issue processing your request. Please try again.', 'bot');
       }
     } catch (err) {
-      this.removeTypingIndicator();
+      this.setLoadingState(false);
       
       console.error('❌ API Error:', err);
       
@@ -672,11 +558,9 @@ class ChatbotApp {
       
       const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
       
-      setTimeout(() => {
-        this.addMessage(randomResponse, 'bot');
-        // Speak the response if voice output is enabled
-        this.voiceManager.speak(randomResponse);
-      }, 500);
+      this.addMessage(randomResponse, 'bot');
+      // Speak the response if voice output is enabled
+      this.voiceManager.speak(randomResponse);
       
       console.warn('Server connection failed, using fallback response:', err);
     } finally {
