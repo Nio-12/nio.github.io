@@ -66,24 +66,27 @@ class DashboardApp {
     try {
       this.showLoading('conversations-loading');
       
-      // Use serverless functions for production deployment
-      const apiUrl = '/api/conversations';
+      // Use persistent server for local development
+      const apiUrl = 'http://localhost:3001/api/conversations';
       
       console.log('🔗 Fetching conversations from:', apiUrl);
       
       const response = await fetch(apiUrl);
-      const data = await response.json();
       
-      if (response.ok) {
-        this.conversations = data.conversations;
-        this.filteredConversations = [...this.conversations];
-        this.displayConversations(this.filteredConversations);
-      } else {
-        this.showError('Failed to load conversations');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+      
+      const conversations = await response.json();
+      console.log('📦 Conversations loaded:', conversations);
+      
+      this.hideLoading('conversations-loading');
+      this.displayConversations(conversations);
+      
     } catch (error) {
-      console.error('Error loading conversations:', error);
-      this.showError('Failed to load conversations');
+      console.error('❌ Failed to load conversations:', error);
+      this.hideLoading('conversations-loading');
+      this.showError('Failed to load conversations. Please try again.');
     }
   }
 

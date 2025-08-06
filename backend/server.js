@@ -1,8 +1,8 @@
-import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -15,34 +15,13 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:5500', 'http://localhost:5500', 'http://127.0.0.1:3000', 'http://localhost:8080', 'http://127.0.0.1:8080'],
-  credentials: true
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-
-// Serve static files from parent directory
-app.use(express.static(path.join(__dirname, '..')));
-
-// Serve index.html for root path
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
-});
-
-// Serve dashboard
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'dashboard.html'));
-});
-
-// Serve voice test
-app.get('/voice-test', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'voice-test.html'));
-});
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '..'))); // Serve static files from parent directory
 
 // Initialize OpenAI
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 // Initialize Supabase
@@ -50,56 +29,70 @@ let supabase = null;
 try {
   if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
     supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-    console.log('✅ Supabase initialized successfully');
-  } else {
-    console.log('⚠️ Supabase not configured - using in-memory storage only');
   }
 } catch (error) {
   console.error('❌ Failed to initialize Supabase:', error.message);
 }
 
-// In-memory storage fallback
-const conversations = new Map();
-
 // Utility functions
-const generateSessionId = () => Math.random().toString(36).substr(2, 9);
-
 const createErrorResponse = (message, status = 500) => ({
   error: message,
   timestamp: new Date().toISOString()
 });
 
-// API Routes
+// Generate unique conversation ID
+const generateConversationId = () => {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 15);
+  return `${timestamp}-${random}`;
+};
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    openai: process.env.OPENAI_API_KEY ? 'Configured' : 'Not configured',
-    supabase: supabase ? 'Connected' : 'Not connected'
-  });
+// Routes
+app.get('/', (req, res) => {
+  res.sendFile('index.html', { root: path.join(__dirname, '..') });
 });
 
-// Test OpenAI connection
-app.get('/api/test-openai', async (req, res) => {
+app.get('/dashboard', (req, res) => {
+  res.sendFile('dashboard.html', { root: path.join(__dirname, '..') });
+});
+
+// Start conversation endpoint
+app.post('/start', async (req, res) => {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(400).json({ error: 'OpenAI API key not configured' });
+    if (!supabase) {
+      return res.status(500).json(createErrorResponse('Supabase not configured'));
     }
 
-    const models = await openai.models.list();
-    res.json({ 
-      success: true, 
-      message: 'OpenAI connection successful',
-      models: models.data.length
+    // Generate new conversation ID
+    const conversationId = generateConversationId();
+    
+    console.log(`🆕 Creating new conversation: ${conversationId}`);
+
+    // Create new conversation in database
+    const { error } = await supabase
+      .from('conversations')
+      .insert({
+        conversation_id: conversationId,
+        messages: [],
+        created_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('❌ Supabase insert error:', error);
+      return res.status(500).json(createErrorResponse('Failed to create conversation'));
+    }
+
+    console.log(`✅ Conversation created successfully: ${conversationId}`);
+
+    res.status(200).json({
+      conversation_id: conversationId,
+      message: 'Conversation started successfully',
+      timestamp: new Date().toISOString()
     });
+
   } catch (error) {
-    console.error('OpenAI test error:', error);
-    res.status(500).json({ 
-      error: 'OpenAI connection failed', 
-      details: error.message 
-    });
+    console.error('❌ Start conversation error:', error);
+    res.status(500).json(createErrorResponse('Failed to start conversation'));
   }
 });
 
@@ -107,7 +100,7 @@ app.get('/api/test-openai', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
   try {
     const { message, sessionId } = req.body;
-
+    
     if (!message || !sessionId) {
       return res.status(400).json(createErrorResponse('Missing message or sessionId'));
     }
@@ -118,7 +111,7 @@ app.post('/api/chat', async (req, res) => {
 
     console.log(`💬 Processing message for session: ${sessionId}`);
 
-    // Get conversation history
+    // Get conversation history from database
     let conversationHistory = [];
     if (supabase) {
       const { data } = await supabase
@@ -130,14 +123,12 @@ app.post('/api/chat', async (req, res) => {
       if (data) {
         conversationHistory = data.messages || [];
       }
-    } else {
-      conversationHistory = conversations.get(sessionId) || [];
     }
 
-    // Add user message
+    // Add user message to history
     conversationHistory.push({ role: 'user', content: message });
 
-    // Call OpenAI
+    // Get AI response
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
@@ -156,7 +147,7 @@ app.post('/api/chat', async (req, res) => {
     // Add AI response to history
     conversationHistory.push({ role: 'assistant', content: aiResponse });
 
-    // Save to database or memory
+    // Save updated conversation to database
     if (supabase) {
       const { error } = await supabase
         .from('conversations')
@@ -169,11 +160,9 @@ app.post('/api/chat', async (req, res) => {
       if (error) {
         console.error('❌ Supabase save error:', error);
       }
-    } else {
-      conversations.set(sessionId, conversationHistory);
     }
 
-    res.json({ response: aiResponse });
+    res.status(200).json({ response: aiResponse });
 
   } catch (error) {
     console.error('❌ Chat error:', error);
@@ -181,110 +170,66 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Get conversations for dashboard
+// Get conversations list
 app.get('/api/conversations', async (req, res) => {
   try {
     if (!supabase) {
-      const inMemoryConversations = Array.from(conversations.entries()).map(([sessionId, conv]) => {
-        const userMessages = conv.filter(msg => msg.role === 'user');
-        const lastUserMessage = userMessages[userMessages.length - 1];
-        const preview = lastUserMessage 
-          ? lastUserMessage.content.substring(0, 100) + (lastUserMessage.content.length > 100 ? '...' : '') 
-          : 'No messages';
-        
-        return {
-          id: sessionId,
-          preview,
-          messageCount: conv.length - 1,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          analysis: null
-        };
-      });
-      
-      return res.json({ conversations: inMemoryConversations });
+      return res.status(500).json(createErrorResponse('Supabase not configured'));
     }
 
     const { data, error } = await supabase
       .from('conversations')
-      .select('conversation_id, messages, created_at, customerName, customerEmail, customerPhone, customerIndustry, customerProblem, customerAvailability, customerConsultation, specialNotes, leadQuality')
+      .select('conversation_id, created_at, messages')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('❌ Supabase error:', error);
-      return res.status(500).json(createErrorResponse('Database error'));
+      console.error('❌ Supabase fetch error:', error);
+      return res.status(500).json(createErrorResponse('Failed to fetch conversations'));
     }
 
-    const processedConversations = (data || []).map(conv => {
-      const messages = conv.messages || [];
-      const userMessages = messages.filter(msg => msg.role === 'user');
-      const lastUserMessage = userMessages[userMessages.length - 1];
-      const preview = lastUserMessage 
-        ? lastUserMessage.content.substring(0, 100) + (lastUserMessage.content.length > 100 ? '...' : '') 
-        : 'No messages';
+    // Format conversations for frontend
+    const formattedConversations = data.map(conv => ({
+      id: conv.conversation_id,
+      createdAt: conv.created_at,
+      messageCount: conv.messages ? conv.messages.length : 0,
+      lastMessage: conv.messages && conv.messages.length > 0 
+        ? conv.messages[conv.messages.length - 1].content 
+        : 'No messages'
+    }));
 
-      return {
-        id: conv.conversation_id,
-        preview,
-        messageCount: messages.length - 1,
-        createdAt: conv.created_at,
-        updatedAt: conv.created_at,
-        analysis: {
-          customerName: conv.customerName,
-          customerEmail: conv.customerEmail,
-          customerPhone: conv.customerPhone,
-          customerIndustry: conv.customerIndustry,
-          customerProblem: conv.customerProblem,
-          customerAvailability: conv.customerAvailability,
-          customerConsultation: conv.customerConsultation,
-          specialNotes: conv.specialNotes,
-          leadQuality: conv.leadQuality
-        }
-      };
-    });
-
-    res.json({ conversations: processedConversations });
+    res.status(200).json(formattedConversations);
 
   } catch (error) {
     console.error('❌ Get conversations error:', error);
-    res.status(500).json(createErrorResponse('Failed to load conversations'));
+    res.status(500).json(createErrorResponse('Failed to get conversations'));
   }
 });
 
-// Get conversation details
+// Get specific conversation
 app.get('/api/conversations/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
     if (!supabase) {
-      const conversation = conversations.get(id);
-      if (!conversation) {
-        return res.status(404).json(createErrorResponse('Conversation not found'));
-      }
-      return res.json({
-        conversationId: id,
-        messages: conversation
-      });
+      return res.status(500).json(createErrorResponse('Supabase not configured'));
     }
 
     const { data, error } = await supabase
       .from('conversations')
-      .select('messages')
+      .select('*')
       .eq('conversation_id', id)
       .single();
 
-    if (error || !data) {
+    if (error) {
+      console.error('❌ Supabase fetch error:', error);
       return res.status(404).json(createErrorResponse('Conversation not found'));
     }
 
-    res.json({
-      conversationId: id,
-      messages: data.messages || []
-    });
+    res.status(200).json(data);
 
   } catch (error) {
     console.error('❌ Get conversation error:', error);
-    res.status(500).json(createErrorResponse('Failed to load conversation'));
+    res.status(500).json(createErrorResponse('Failed to get conversation'));
   }
 });
 
@@ -294,8 +239,7 @@ app.delete('/api/conversations/:id', async (req, res) => {
     const { id } = req.params;
 
     if (!supabase) {
-      conversations.delete(id);
-      return res.json({ success: true });
+      return res.status(500).json(createErrorResponse('Supabase not configured'));
     }
 
     const { error } = await supabase
@@ -304,11 +248,11 @@ app.delete('/api/conversations/:id', async (req, res) => {
       .eq('conversation_id', id);
 
     if (error) {
-      console.error('❌ Delete error:', error);
+      console.error('❌ Supabase delete error:', error);
       return res.status(500).json(createErrorResponse('Failed to delete conversation'));
     }
 
-    res.json({ success: true });
+    res.status(200).json({ message: 'Conversation deleted successfully' });
 
   } catch (error) {
     console.error('❌ Delete conversation error:', error);
@@ -321,66 +265,41 @@ app.post('/api/conversations/:id/analyze', async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json(createErrorResponse('OpenAI API key not configured'));
+    if (!supabase) {
+      return res.status(500).json(createErrorResponse('Supabase not configured'));
     }
 
     // Get conversation
-    let messages = [];
-    if (supabase) {
-      const { data } = await supabase
-        .from('conversations')
-        .select('messages')
-        .eq('conversation_id', id)
-        .single();
+    const { data: conversation, error: fetchError } = await supabase
+      .from('conversations')
+      .select('messages')
+      .eq('conversation_id', id)
+      .single();
 
-      if (!data) {
-        return res.status(404).json(createErrorResponse('Conversation not found'));
-      }
-      messages = data.messages || [];
-    } else {
-      messages = conversations.get(id) || [];
+    if (fetchError) {
+      console.error('❌ Supabase fetch error:', fetchError);
+      return res.status(404).json(createErrorResponse('Conversation not found'));
     }
 
-    if (messages.length === 0) {
+    if (!conversation.messages || conversation.messages.length === 0) {
       return res.status(400).json(createErrorResponse('No messages to analyze'));
     }
 
-    // Create analysis prompt
-    const conversationText = messages
-      .filter(msg => msg.role === 'user')
-      .map(msg => msg.content)
-      .join('\n');
-
-    const analysisPrompt = `
-Analyze this customer conversation and extract the following information in JSON format:
-
-Customer Information:
-- customerName: Full name if mentioned
-- customerEmail: Email address if mentioned  
-- customerPhone: Phone number if mentioned
-- customerIndustry: Industry/business type if mentioned
-
-Business Details:
-- customerProblem: Main problems or needs mentioned
-- customerAvailability: Availability for consultation if mentioned
-- customerConsultation: Boolean - whether they want consultation
-
-Lead Assessment:
-- leadQuality: "good", "ok", or "spam" based on seriousness
-- specialNotes: Any important notes or observations
-
-Conversation: ${conversationText}
-
-Return only valid JSON without any additional text.
-`;
+    // Analyze with OpenAI
+    const analysisPrompt = `Analyze this conversation and provide insights:
+    - Overall sentiment
+    - Key topics discussed
+    - User satisfaction level
+    - Suggestions for improvement
+    
+    Conversation: ${JSON.stringify(conversation.messages)}`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
         {
           role: 'system',
-          content: 'You are a customer analysis expert. Extract customer information from conversations and return only valid JSON.'
+          content: 'You are a conversation analyst. Provide clear, concise analysis in Vietnamese.'
         },
         {
           role: 'user',
@@ -388,74 +307,31 @@ Return only valid JSON without any additional text.
         }
       ],
       max_tokens: 500,
-      temperature: 0.3
+      temperature: 0.7
     });
 
-    const analysisText = completion.choices[0].message.content;
-    let analysis;
+    const analysis = completion.choices[0].message.content;
 
-    try {
-      analysis = JSON.parse(analysisText);
-    } catch (parseError) {
-      console.error('❌ JSON parse error:', parseError);
-      analysis = {
-        customerName: null,
-        customerEmail: null,
-        customerPhone: null,
-        customerIndustry: null,
-        customerProblem: null,
-        customerAvailability: null,
-        customerConsultation: false,
-        leadQuality: 'ok',
-        specialNotes: 'Analysis failed - could not parse response'
-      };
-    }
-
-    // Save analysis to database
-    if (supabase) {
-      const { error } = await supabase
-        .from('conversations')
-        .update({
-          customerName: analysis.customerName,
-          customerEmail: analysis.customerEmail,
-          customerPhone: analysis.customerPhone,
-          customerIndustry: analysis.customerIndustry,
-          customerProblem: analysis.customerProblem,
-          customerAvailability: analysis.customerAvailability,
-          customerConsultation: analysis.customerConsultation,
-          leadQuality: analysis.leadQuality,
-          specialNotes: analysis.specialNotes
-        })
-        .eq('conversation_id', id);
-
-      if (error) {
-        console.error('❌ Save analysis error:', error);
-      }
-    }
-
-    res.json({ analysis });
+    res.status(200).json({ analysis });
 
   } catch (error) {
-    console.error('❌ Analyze error:', error);
+    console.error('❌ Analyze conversation error:', error);
     res.status(500).json(createErrorResponse('Failed to analyze conversation'));
   }
+});
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📝 API endpoints:`);
-  console.log(`   POST /api/chat - Send a message`);
-  console.log(`   GET /api/conversations - Get all conversations`);
-  console.log(`   GET /api/conversations/:id - Get conversation details`);
-  console.log(`   DELETE /api/conversations/:id - Delete conversation`);
-  console.log(`   POST /api/conversations/:id/analyze - Analyze conversation`);
-  console.log(`   GET /api/health - Health check`);
-  console.log(`   GET /api/test-openai - Test OpenAI connection`);
-  console.log(``);
-  console.log(`🌐 Frontend available at: http://localhost:${PORT}/index.html`);
-  
-  if (!process.env.OPENAI_API_KEY) {
-    console.log(`\n⚠️  WARNING: Please set your OpenAI API key in the .env file!`);
-  }
-}); 
+  console.log(`📊 Dashboard: http://localhost:${PORT}/dashboard`);
+  console.log(`🔧 Health check: http://localhost:${PORT}/api/health`);
+});

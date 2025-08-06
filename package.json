@@ -1,31 +1,31 @@
 {
-  "name": "nio-chatbot-serverless",
+  "name": "nio-chatbot",
   "version": "1.0.0",
-  "description": "NiO AI Chatbot with serverless functions for Vercel deployment",
-  "type": "module",
+  "description": "NiO AI Chatbot with persistent server",
+  "main": "backend/server.js",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'No build step required'",
-    "start": "vercel dev",
-    "deploy": "vercel --prod"
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "chatbot",
     "ai",
     "openai",
     "supabase",
-    "serverless",
-    "vercel"
+    "express"
   ],
   "author": "NiO Creative",
   "license": "MIT",
   "dependencies": {
-    "@supabase/supabase-js": "^2.52.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.0.3",
-    "openai": "^5.10.1"
+    "express": "^4.18.2",
+    "openai": "^5.10.1",
+    "@supabase/supabase-js": "^2.52.0"
   },
   "devDependencies": {
-    "vercel": "^32.0.0"
+    "nodemon": "^3.0.1"
   },
   "engines": {
     "node": ">=18.0.0"

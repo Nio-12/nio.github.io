@@ -1,216 +1,150 @@
-# NiO AI Chatbot - Serverless Version
+# NiO AI Chatbot
 
-## 🚀 Overview
+A modern AI chatbot built with Express.js, OpenAI, and Supabase.
 
-NiO AI Chatbot được thiết kế để chạy trên Vercel serverless functions, cung cấp giải pháp chatbot thông minh với tích hợp OpenAI và Supabase.
+## 🚀 Features
 
-## ✨ Features
+- **AI-Powered Chat**: Powered by OpenAI GPT-3.5-turbo
+- **Voice Input/Output**: Speech recognition and synthesis
+- **Conversation Management**: Store and retrieve chat history
+- **Dashboard**: View and manage all conversations
+- **Real-time Typing**: Animated typing effect
+- **Responsive Design**: Works on desktop and mobile
 
-- 🤖 **AI Chatbot**: Tích hợp OpenAI GPT-3.5-turbo
-- 💬 **Conversation Management**: Lưu trữ và quản lý cuộc hội thoại
-- 📊 **Dashboard**: Giao diện quản lý conversations
-- 🎯 **Lead Analysis**: Phân tích khách hàng tự động
-- 🌐 **Serverless**: Deploy trên Vercel không cần server
-- 🔒 **Secure**: Environment variables bảo mật
+## 🛠️ Tech Stack
 
-## 🏗️ Project Structure
+- **Backend**: Node.js, Express.js
+- **AI**: OpenAI API
+- **Database**: Supabase (PostgreSQL)
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+- **Voice**: Web Speech API
 
-```
-nio.github.io/
-├── api/                          # Serverless Functions
-│   ├── chat.js                   # Chat API endpoint
-│   ├── conversations.js          # Conversations list API
-│   ├── conversations/[id].js     # Single conversation API
-│   ├── conversations/[id]/analyze.js # Analysis API
-│   ├── health.js                 # Health check API
-│   └── test-openai.js           # OpenAI test API
-├── js/
-│   ├── chatbot.js               # Frontend chatbot logic
-│   └── dashboard.js             # Dashboard logic
-├── css/
-│   ├── chatbot.css              # Chatbot styles
-│   └── dashboard.css            # Dashboard styles
-├── image/                       # Static images
-├── index.html                   # Main chatbot page
-├── dashboard.html               # Dashboard page
-├── package.json                 # Dependencies
-├── vercel.json                  # Vercel configuration
-└── .env.example                 # Environment variables template
-```
+## 📦 Installation
 
-## 🚀 Quick Start
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/nio-chatbot.git
+   cd nio-chatbot
+   ```
 
-### 1. Clone Repository
-```bash
-git clone https://github.com/your-username/nio.github.io.git
-cd nio.github.io
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-### 2. Install Dependencies
-```bash
-npm install
-```
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` file:
+   ```env
+   # OpenAI Configuration
+   OPENAI_API_KEY=your_openai_api_key_here
 
-### 3. Environment Variables
-Tạo file `.env` từ `.env.example`:
-```bash
-cp .env.example .env
-```
+   # Supabase Configuration
+   SUPABASE_URL=your_supabase_project_url_here
+   SUPABASE_KEY=your_supabase_anon_key_here
 
-Cập nhật các giá trị:
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-SUPABASE_URL=your_supabase_project_url_here
-SUPABASE_KEY=your_supabase_anon_key_here
-NODE_ENV=production
-```
+   # Optional: Node Environment
+   NODE_ENV=development
+   ```
 
-### 4. Local Development
+4. **Set up Supabase Database**
+   
+   Create a table called `conversations` with the following structure:
+   ```sql
+   CREATE TABLE conversations (
+     conversation_id TEXT PRIMARY KEY,
+     messages JSONB DEFAULT '[]',
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+   );
+   ```
+
+## 🚀 Running the Application
+
+### Development Mode
 ```bash
 npm run dev
 ```
 
-### 5. Deploy to Vercel
+### Production Mode
 ```bash
-npm run deploy
+npm start
+```
+
+The server will start on `http://localhost:3001`
+
+## 📁 Project Structure
+
+```
+nio-chatbot/
+├── backend/
+│   ├── server.js          # Express server
+│   └── package.json       # Backend dependencies
+├── css/
+│   ├── chatbot.css        # Chatbot styles
+│   └── dashboard.css      # Dashboard styles
+├── js/
+│   ├── chatbot.js         # Chatbot functionality
+│   └── dashboard.js       # Dashboard functionality
+├── image/                 # Static images
+├── index.html             # Main page
+├── dashboard.html         # Dashboard page
+├── package.json           # Root dependencies
+└── README.md
 ```
 
 ## 🔧 API Endpoints
 
-### Chat API
-- **POST** `/api/chat`
-- **Body**: `{ "message": "string", "sessionId": "string" }`
-- **Response**: `{ "response": "string" }`
+### Chat
+- `POST /api/chat` - Send a message to the AI
 
-### Conversations API
-- **GET** `/api/conversations`
-- **Response**: `{ "conversations": [...] }`
+### Conversations
+- `GET /api/conversations` - Get all conversations
+- `GET /api/conversations/:id` - Get specific conversation
+- `DELETE /api/conversations/:id` - Delete conversation
+- `POST /api/conversations/:id/analyze` - Analyze conversation
 
-### Conversation Details
-- **GET** `/api/conversations/[id]`
-- **Response**: `{ "conversationId": "string", "messages": [...] }`
+### System
+- `POST /start` - Start a new conversation
+- `GET /api/health` - Health check
 
-### Delete Conversation
-- **DELETE** `/api/conversations/[id]`
-- **Response**: `{ "success": true }`
+## 🎯 Usage
 
-### Analyze Conversation
-- **POST** `/api/conversations/[id]/analyze`
-- **Response**: `{ "analysis": {...} }`
+1. **Start the server**: `npm run dev`
+2. **Open browser**: Navigate to `http://localhost:3001`
+3. **Chat with AI**: Click the chatbot icon and start chatting
+4. **View dashboard**: Click the dashboard button to see all conversations
 
-### Health Check
-- **GET** `/api/health`
-- **Response**: `{ "status": "OK", ... }`
+## 🔧 Configuration
 
-## 🌐 Deployment
+### Environment Variables
 
-### Vercel Deployment
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `OPENAI_API_KEY` | Your OpenAI API key | Yes |
+| `SUPABASE_URL` | Your Supabase project URL | Yes |
+| `SUPABASE_KEY` | Your Supabase anon key | Yes |
+| `NODE_ENV` | Environment (development/production) | No |
 
-1. **Connect to Vercel**:
-```bash
-vercel login
-vercel
-```
+### Supabase Setup
 
-2. **Set Environment Variables**:
-```bash
-vercel env add OPENAI_API_KEY
-vercel env add SUPABASE_URL
-vercel env add SUPABASE_KEY
-```
-
-3. **Deploy**:
-```bash
-vercel --prod
-```
-
-### Environment Variables Setup
-
-Trong Vercel Dashboard:
-1. Vào Project Settings
-2. Chọn Environment Variables
-3. Thêm các biến:
-   - `OPENAI_API_KEY`
-   - `SUPABASE_URL`
-   - `SUPABASE_KEY`
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-1. **404 Error on API calls**:
-   - Kiểm tra `vercel.json` configuration
-   - Đảm bảo serverless functions được deploy
-
-2. **CORS Errors**:
-   - Serverless functions đã có CORS headers
-   - Kiểm tra API URL trong frontend
-
-3. **Environment Variables**:
-   - Kiểm tra Vercel environment variables
-   - Đảm bảo tên biến chính xác
-
-4. **OpenAI API Errors**:
-   - Kiểm tra API key
-   - Kiểm tra quota và billing
-
-### Debug Commands
-
-```bash
-# Check deployment status
-vercel ls
-
-# View logs
-vercel logs
-
-# Test API locally
-vercel dev
-
-# Check environment variables
-vercel env ls
-```
-
-## 📝 Development
-
-### Local Development
-```bash
-# Start local server
-npm run dev
-
-# Test API endpoints
-curl http://localhost:3000/api/health
-```
-
-### Adding New API Endpoints
-
-1. Tạo file trong thư mục `api/`
-2. Export default function handler
-3. Thêm CORS headers
-4. Deploy lên Vercel
-
-### Frontend Development
-
-- Sử dụng relative URLs cho API calls
-- Test với `vercel dev` cho local development
-- Deploy để test production
+1. Create a new Supabase project
+2. Get your project URL and anon key
+3. Create the `conversations` table
+4. Add the credentials to your `.env` file
 
 ## 🤝 Contributing
 
-1. Fork repository
-2. Tạo feature branch
-3. Commit changes
-4. Push to branch
-5. Tạo Pull Request
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
-
-## 🆘 Support
-
-- 📧 Email: support@nio.com
-- 💬 Discord: [NiO Community]
-- 📖 Documentation: [Wiki]
+This project is licensed under the MIT License.
 
 ---
 

@@ -145,7 +145,7 @@ class ChatbotApp {
   constructor() {
     this.isChatOpen = false;
     this.isMinimized = false;
-    this.sessionId = null; // Will be set by startConversation
+    this.sessionId = this.generateSessionId();
     this.elements = this.initializeElements();
     this.voiceManager = new VoiceManager();
     this.bindEvents();
@@ -164,7 +164,7 @@ class ChatbotApp {
     try {
       console.log('🆕 Starting new conversation...');
       
-      const response = await fetch('/api/start', {
+      const response = await fetch('http://localhost:3001/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -619,8 +619,8 @@ class ChatbotApp {
         await this.startConversation();
       }
       
-      // Use serverless functions for production deployment
-      const apiUrl = '/api/chat';
+      // Use persistent server for local development
+      const apiUrl = 'http://localhost:3001/api/chat';
       
       console.log('🌐 Calling API:', apiUrl, 'with sessionId:', this.sessionId);
       
