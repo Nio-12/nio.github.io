@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, '..'))); // Serve static files from 
 // Initialize OpenAI
 let openai = null;
 try {
-  if (process.env.OPENAI_API_KEY) {
+  if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_api_key_here') {
     openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
@@ -123,7 +123,56 @@ app.post('/api/chat', async (req, res) => {
     }
 
     if (!openai) {
-      return res.status(500).json(createErrorResponse('OpenAI not configured'));
+      // Return fallback response instead of error when OpenAI is not configured
+      const fallbackResponses = [
+        "Xin chào! Tôi là NiO Assistant. Hiện tại tôi đang ở chế độ demo. Bạn có thể hỏi tôi bất cứ điều gì và tôi sẽ cố gắng trả lời hữu ích nhất có thể.",
+        "Cảm ơn bạn đã liên hệ! Tôi là trợ lý AI của NiO. Hiện tại tôi đang trong chế độ demo, nhưng tôi vẫn có thể giúp bạn với các câu hỏi cơ bản.",
+        "Chào bạn! Tôi là NiO Assistant. Mặc dù tôi đang ở chế độ demo, tôi vẫn có thể hỗ trợ bạn. Bạn cần gì không?",
+        "Xin chào! Tôi là trợ lý AI của NiO. Hiện tại tôi đang được cấu hình, nhưng tôi vẫn có thể trò chuyện với bạn. Bạn muốn hỏi gì không?",
+        "Cảm ơn bạn đã sử dụng NiO Assistant! Tôi đang trong chế độ demo và sẵn sàng hỗ trợ bạn với các câu hỏi."
+      ];
+      
+      const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+      
+      console.log(`💬 Processing message for session: ${sessionId} (fallback mode)`);
+
+      // Save conversation even with fallback response
+      let conversationHistory = [];
+      if (supabase) {
+        const { data } = await supabase
+          .from('conversations')
+          .select('messages')
+          .eq('conversation_id', sessionId)
+          .single();
+        
+        if (data) {
+          conversationHistory = data.messages || [];
+        }
+      } else {
+        conversationHistory = conversations.get(sessionId) || [];
+      }
+
+      // Add user message and fallback response to history
+      conversationHistory.push({ role: 'user', content: message });
+      conversationHistory.push({ role: 'assistant', content: randomResponse });
+
+      // Save updated conversation
+      if (supabase) {
+        const { error } = await supabase
+          .from('conversations')
+          .update({
+            messages: conversationHistory
+          })
+          .eq('conversation_id', sessionId);
+
+        if (error) {
+          console.error('❌ Supabase save error:', error);
+        }
+      } else {
+        conversations.set(sessionId, conversationHistory);
+      }
+
+      return res.status(200).json({ response: randomResponse });
     }
 
     console.log(`💬 Processing message for session: ${sessionId}`);
@@ -170,11 +219,10 @@ app.post('/api/chat', async (req, res) => {
     if (supabase) {
       const { error } = await supabase
         .from('conversations')
-        .upsert({
-          conversation_id: sessionId,
-          messages: conversationHistory,
-          created_at: new Date().toISOString()
-        });
+        .update({
+          messages: conversationHistory
+        })
+        .eq('conversation_id', sessionId);
 
       if (error) {
         console.error('❌ Supabase save error:', error);

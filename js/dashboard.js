@@ -137,32 +137,49 @@ class DashboardApp {
     }
 
     this.elements.conversationsList.innerHTML = conversations.map(conv => {
-      const date = new Date(conv.createdAt);
-      const formattedDate = date.toLocaleDateString();
-      const formattedTime = date.toLocaleTimeString();
+      let formattedDate = 'Unknown';
+      let formattedTime = 'Unknown';
+      
+      try {
+        if (conv.createdAt) {
+          const date = new Date(conv.createdAt);
+          if (!isNaN(date.getTime())) {
+            formattedDate = date.toLocaleDateString();
+            formattedTime = date.toLocaleTimeString();
+          }
+        }
+      } catch (error) {
+        console.error('Error formatting date:', error);
+      }
+      
+      // Safely handle conversation ID
+      const conversationId = conv.id || conv.conversation_id || 'unknown';
+      const preview = conv.lastMessage || conv.preview || 'No messages';
+      const messageCount = conv.messageCount || 0;
+      const updatedAt = conv.updatedAt || conv.createdAt;
       
       return `
-        <div class="conversation-item" data-id="${conv.id}">
+        <div class="conversation-item" data-id="${conversationId}">
           <div class="conversation-preview">
             <div class="conversation-header">
-              <div class="conversation-id">ID: ${conv.id.substring(0, 8)}...</div>
+              <div class="conversation-id">ID: ${conversationId.substring(0, 8)}...</div>
               <div class="conversation-datetime">
                 <span class="date">${formattedDate}</span>
                 <span class="time">${formattedTime}</span>
               </div>
             </div>
-            <div class="preview-text">${conv.preview}</div>
+            <div class="preview-text">${this.escapeHtml(preview)}</div>
             <div class="conversation-meta">
-              <span class="message-count">${conv.messageCount} messages</span>
-              <span class="timestamp">${this.formatTimestamp(conv.updatedAt)}</span>
+              <span class="message-count">${messageCount} messages</span>
+              <span class="timestamp">${this.formatTimestamp(updatedAt)}</span>
             </div>
           </div>
           <div class="conversation-actions">
             <div class="conversation-arrow">→</div>
-            <button class="analyze-btn" data-id="${conv.id}" title="Analyze conversation" aria-label="Analyze conversation">
+            <button class="analyze-btn" data-id="${conversationId}" title="Analyze conversation" aria-label="Analyze conversation">
               <span>🔍</span>
             </button>
-            <button class="delete-btn" data-id="${conv.id}" title="Delete conversation" aria-label="Delete conversation">
+            <button class="delete-btn" data-id="${conversationId}" title="Delete conversation" aria-label="Delete conversation">
               <span>🗑️</span>
             </button>
           </div>
@@ -248,9 +265,15 @@ class DashboardApp {
   displayConversationDetails(data) {
     this.hideLoading('messages-loading');
     
-    this.elements.conversationTitle.textContent = `Conversation ${data.conversationId.substring(0, 8)}...`;
+    // Handle both conversationId and conversation_id formats
+    const conversationId = data.conversationId || data.conversation_id;
+    if (conversationId) {
+      this.elements.conversationTitle.textContent = `Conversation ${conversationId.substring(0, 8)}...`;
+    } else {
+      this.elements.conversationTitle.textContent = 'Conversation Details';
+    }
     
-    if (data.messages.length === 0) {
+    if (!data.messages || data.messages.length === 0) {
       this.elements.messagesContainer.innerHTML = `
         <div class="empty-state">
           <p>No messages in this conversation</p>
@@ -375,8 +398,35 @@ class DashboardApp {
   }
 
   displayAnalysis(analysis) {
-    const leadQualityClass = analysis.leadQuality === 'good' ? 'quality-good' : 
-                            analysis.leadQuality === 'ok' ? 'quality-ok' : 'quality-spam';
+    // Handle both string and object analysis data
+    if (typeof analysis === 'string') {
+      // API returns a string analysis
+      this.elements.analysisContent.innerHTML = `
+        <div class="analysis-simple">
+          <h5>Conversation Analysis</h5>
+          <div class="analysis-text">
+            <p>${this.escapeHtml(analysis)}</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    // Validate analysis object data
+    if (!analysis || typeof analysis !== 'object') {
+      console.error('Invalid analysis data:', analysis);
+      this.elements.analysisContent.innerHTML = `
+        <div class="error-state">
+          <p>Invalid analysis data received</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // Safely handle leadQuality
+    const leadQuality = analysis.leadQuality || 'unknown';
+    const leadQualityClass = leadQuality === 'good' ? 'quality-good' : 
+                            leadQuality === 'ok' ? 'quality-ok' : 'quality-spam';
     
     this.elements.analysisContent.innerHTML = `
       <div class="analysis-grid">
@@ -420,7 +470,7 @@ class DashboardApp {
           <h5>Lead Assessment</h5>
           <div class="analysis-field">
             <label>Lead Quality:</label>
-            <span class="lead-quality ${leadQualityClass}">${analysis.leadQuality.toUpperCase()}</span>
+            <span class="lead-quality ${leadQualityClass}">${leadQuality.toUpperCase()}</span>
           </div>
           <div class="analysis-field">
             <label>Special Notes:</label>
@@ -432,25 +482,50 @@ class DashboardApp {
   }
 
   formatTimestamp(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (!timestamp) return 'Unknown';
     
-    return date.toLocaleDateString();
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return 'Invalid date';
+      
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+      
+      return date.toLocaleDateString();
+    } catch (error) {
+      console.error('Error formatting timestamp:', error);
+      return 'Invalid date';
+    }
   }
 
   escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    if (!text) return '';
+    
+    try {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    } catch (error) {
+      console.error('Error escaping HTML:', error);
+      return String(text).replace(/[&<>"']/g, function(match) {
+        const escape = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        };
+        return escape[match];
+      });
+    }
   }
 
   showLoading(elementId) {

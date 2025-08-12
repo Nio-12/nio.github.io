@@ -484,6 +484,33 @@ body {
   gap: 20px;
 }
 
+.analysis-simple {
+  background: linear-gradient(135deg, #1c1c1c 0%, #2d2d2d 100%);
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 25px;
+  margin-top: 20px;
+}
+
+.analysis-simple h5 {
+  color: #fff;
+  font-size: 1.3em;
+  font-weight: 600;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.analysis-text {
+  color: #eee;
+  line-height: 1.6;
+}
+
+.analysis-text p {
+  margin-bottom: 15px;
+  text-align: justify;
+}
+
 .analysis-card {
   background: #1a1a1a;
   border: 1px solid #333;
