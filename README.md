@@ -1,151 +1,222 @@
-# NiO AI Chatbot
+# NiO AI Chatbot - Vercel Serverless
 
-A modern AI chatbot built with Express.js, OpenAI, and Supabase.
+NiO AI Chatbot được xây dựng với Vercel serverless functions, sử dụng OpenAI GPT-3.5-turbo và Supabase để lưu trữ dữ liệu.
 
-## 🚀 Features
+## 🚀 Tính năng
 
-- **AI-Powered Chat**: Powered by OpenAI GPT-3.5-turbo
-- **Voice Input/Output**: Speech recognition and synthesis
-- **Conversation Management**: Store and retrieve chat history
-- **Dashboard**: View and manage all conversations
-- **Real-time Typing**: Animated typing effect
-- **Responsive Design**: Works on desktop and mobile
+- **AI Chatbot thông minh** với GPT-3.5-turbo
+- **Voice input/output** - Hỗ trợ nhập liệu và phát âm bằng giọng nói
+- **Conversation history** - Lưu trữ và quản lý cuộc hội thoại
+- **Responsive design** - Giao diện đẹp mắt trên mọi thiết bị
+- **Serverless architecture** - Chạy trên Vercel với hiệu suất cao
 
-## 🛠️ Tech Stack
-
-- **Backend**: Node.js, Express.js
-- **AI**: OpenAI API
-- **Database**: Supabase (PostgreSQL)
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Voice**: Web Speech API
-
-## 📦 Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/nio-chatbot.git
-   cd nio-chatbot
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` file:
-   ```env
-   # OpenAI Configuration
-   OPENAI_API_KEY=your_openai_api_key_here
-
-   # Supabase Configuration
-   SUPABASE_URL=your_supabase_project_url_here
-   SUPABASE_KEY=your_supabase_anon_key_here
-
-   # Optional: Node Environment
-   NODE_ENV=development
-   ```
-
-4. **Set up Supabase Database**
-   
-   Create a table called `conversations` with the following structure:
-   ```sql
-   CREATE TABLE conversations (
-     conversation_id TEXT PRIMARY KEY,
-     messages JSONB DEFAULT '[]',
-     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-   );
-   ```
-
-## 🚀 Running the Application
-
-### Development Mode
-```bash
-npm run dev
-```
-
-### Production Mode
-```bash
-npm start
-```
-
-The server will start on `http://localhost:3001`
-
-## 📁 Project Structure
+## 🏗️ Kiến trúc
 
 ```
-nio-chatbot/
-├── backend/
-│   ├── server.js          # Express server
-│   └── package.json       # Backend dependencies
+nio.github.io/
+├── api/                    # Vercel serverless functions
+│   ├── health.js          # Health check endpoint
+│   ├── start.js           # Start conversation
+│   ├── chat.js            # Chat endpoint
+│   ├── conversations.js   # Conversations management
+│   └── conversations/
+│       └── [id].js        # Specific conversation
+├── js/
+│   ├── chatbot.js         # Frontend chatbot logic
+│   └── dashboard.js       # Dashboard functionality
 ├── css/
 │   ├── chatbot.css        # Chatbot styles
 │   └── dashboard.css      # Dashboard styles
-├── js/
-│   ├── chatbot.js         # Chatbot functionality
-│   └── dashboard.js       # Dashboard functionality
-├── image/                 # Static images
-├── index.html             # Main page
-├── dashboard.html         # Dashboard page
-├── package.json           # Root dependencies
-└── README.md
+├── vercel.json            # Vercel configuration
+└── package.json           # Dependencies
 ```
 
-## 🔧 API Endpoints
+## 🛠️ Cài đặt
+
+### 1. Clone repository
+```bash
+git clone <repository-url>
+cd nio.github.io
+```
+
+### 2. Cài đặt dependencies
+```bash
+npm install
+```
+
+### 3. Cấu hình Environment Variables
+
+Tạo file `.env` hoặc cấu hình trong Vercel dashboard:
+
+```env
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Supabase Configuration
+SUPABASE_URL=your_supabase_url_here
+SUPABASE_KEY=your_supabase_service_key_here
+
+# Environment
+NODE_ENV=production
+```
+
+### 4. Cấu hình Supabase
+
+Tạo bảng `conversations` trong Supabase:
+
+```sql
+CREATE TABLE conversations (
+  id SERIAL PRIMARY KEY,
+  conversation_id TEXT UNIQUE NOT NULL,
+  messages JSONB DEFAULT '[]',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS (Row Level Security)
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+
+-- Create policy for service role
+CREATE POLICY "Service role can do everything" ON conversations
+  FOR ALL USING (auth.role() = 'service_role');
+```
+
+## 🚀 Deployment
+
+### Deploy lên Vercel
+
+1. **Cài đặt Vercel CLI:**
+```bash
+npm i -g vercel
+```
+
+2. **Login vào Vercel:**
+```bash
+vercel login
+```
+
+3. **Deploy:**
+```bash
+vercel --prod
+```
+
+4. **Cấu hình Environment Variables trong Vercel Dashboard:**
+   - Vào project settings
+   - Thêm các biến môi trường: `OPENAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`
+
+### Development
+
+```bash
+# Chạy development server
+npm run dev
+
+# Deploy production
+npm run deploy
+```
+
+## 📡 API Endpoints
+
+### Health Check
+```
+GET /api/health
+```
+
+### Start Conversation
+```
+POST /api/start
+```
 
 ### Chat
-- `POST /api/chat` - Send a message to the AI
+```
+POST /api/chat
+Body: { "message": "Hello", "sessionId": "conversation-id" }
+```
 
-### Conversations
-- `GET /api/conversations` - Get all conversations
-- `GET /api/conversations/:id` - Get specific conversation
-- `DELETE /api/conversations/:id` - Delete conversation
-- `POST /api/conversations/:id/analyze` - Analyze conversation
+### Get Conversations
+```
+GET /api/conversations
+```
 
-### System
-- `POST /start` - Start a new conversation
-- `GET /api/health` - Health check
+### Get Specific Conversation
+```
+GET /api/conversations/[id]
+```
 
-## 🎯 Usage
+### Delete Conversation
+```
+DELETE /api/conversations?id=[conversation-id]
+```
 
-1. **Start the server**: `npm run dev`
-2. **Open browser**: Navigate to `http://localhost:3001`
-3. **Chat with AI**: Click the chatbot icon and start chatting
-4. **View dashboard**: Click the dashboard button to see all conversations
+### Analyze Conversation
+```
+POST /api/conversations?id=[conversation-id]
+```
 
-## 🔧 Configuration
+## 🎨 Tính năng Frontend
 
-### Environment Variables
+- **Compact Mode** - Chatbot nhỏ gọn ở góc màn hình
+- **Voice Control** - Nhập liệu và phát âm bằng giọng nói
+- **Responsive Design** - Tương thích mobile và desktop
+- **Real-time Chat** - Trò chuyện mượt mà với AI
+- **Conversation History** - Lưu trữ và xem lại cuộc hội thoại
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `OPENAI_API_KEY` | Your OpenAI API key | Yes |
-| `SUPABASE_URL` | Your Supabase project URL | Yes |
-| `SUPABASE_KEY` | Your Supabase anon key | Yes |
-| `NODE_ENV` | Environment (development/production) | No |
+## 🔧 Cấu hình
 
-### Supabase Setup
+### Vercel Configuration (`vercel.json`)
+```json
+{
+  "version": 2,
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
+```
 
-1. Create a new Supabase project
-2. Get your project URL and anon key
-3. Create the `conversations` table
-4. Add the credentials to your `.env` file
+## 📊 Monitoring
+
+- **Vercel Analytics** - Theo dõi performance
+- **Vercel Functions Logs** - Xem logs của serverless functions
+- **Supabase Dashboard** - Quản lý database và conversations
+
+## 🚀 Performance
+
+- **Serverless Functions** - Tự động scale theo traffic
+- **Edge Network** - CDN toàn cầu của Vercel
+- **Cold Start Optimization** - Tối ưu thời gian khởi động
+- **Database Connection Pooling** - Supabase connection management
+
+## 🔒 Security
+
+- **CORS Configuration** - Chỉ cho phép domain được phép
+- **Environment Variables** - Bảo mật API keys
+- **Supabase RLS** - Row Level Security cho database
+- **Input Validation** - Validate tất cả input từ user
+
+## 📝 License
+
+MIT License - Xem file LICENSE để biết thêm chi tiết.
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+1. Fork repository
+2. Tạo feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Tạo Pull Request
 
-## 📄 License
+## 📞 Support
 
-This project is licensed under the MIT License.
-
----
-
-**NiO Creative** - Building the future of AI chatbots 🚀 
+- **Email:** support@niocreative.com
+- **Website:** https://niocreative.com
+- **Documentation:** https://docs.niocreative.com 

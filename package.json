@@ -2,11 +2,12 @@
   "name": "nio-chatbot",
   "version": "1.0.0",
   "description": "NiO AI Chatbot with persistent server",
-  "main": "backend/server.js",
+  "main": "api/chat.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'",
+    "start": "vercel dev",
+    "deploy": "vercel --prod"
   },
   "keywords": [
     "chatbot",
@@ -18,14 +19,11 @@
   "author": "NiO Creative",
   "license": "MIT",
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
-    "express": "^4.18.2",
     "openai": "^5.10.1",
     "@supabase/supabase-js": "^2.52.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "vercel": "^32.0.0"
   },
   "engines": {
     "node": ">=18.0.0"

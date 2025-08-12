@@ -164,7 +164,7 @@ class ChatbotApp {
     try {
       console.log('🆕 Starting new conversation...');
       
-      const response = await fetch('http://localhost:3001/start', {
+      const response = await fetch('/api/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -509,8 +509,8 @@ class ChatbotApp {
         await this.startConversation();
       }
       
-      // Use persistent server for local development
-      const apiUrl = 'http://localhost:3001/api/chat';
+      // Use Vercel serverless functions
+      const apiUrl = '/api/chat';
       
       console.log('🌐 Calling API:', apiUrl, 'with sessionId:', this.sessionId);
       
