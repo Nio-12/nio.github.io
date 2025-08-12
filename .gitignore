@@ -65,3 +65,6 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+
+# Vercel build output
+_vercel_build_output.json
